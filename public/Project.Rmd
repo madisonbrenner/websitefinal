@@ -1,0 +1,12 @@
+---
+title: "Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- [Election Data by State for the 2016 Presidential Elections](/prez_project_meb.Rmd)
+
+- [Gun Violence Incidents in the United States in 2014](/project2madisonbrenner.Rmd)

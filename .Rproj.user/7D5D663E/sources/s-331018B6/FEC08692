@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1589225393126.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "98017439",
+    "id" : "FEC08692",
+    "lastKnownWriteTime" : 1584047498,
+    "last_content_update" : 1584047498,
+    "path" : "~/Downloads/prez_project_meb.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "1,66",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

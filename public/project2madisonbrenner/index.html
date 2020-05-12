@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Madison Brenner" />
+    <meta name="description" content="Describe your website">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project 2: Gun Violence Incidents in the United States in 2014 - Madison Brenner</title>
+    <meta name="generator" content="Hugo 0.70.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/project/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project2madisonbrenner/">Project 2: Gun Violence Incidents in the United States in 2014 - Madison Brenner</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<p>The data chosen for this project was a large dataset compiling every gun violence indident and the number of people injured or killed in each incident. This was merged with a dataset that showed each possible gun law a state did and did not have, and this was merged with the first dataset to only display gun law and violence incidents from the entire year of 2014. The dataset contains many variables. The categorical ones that will be focused on for the project are the categories of whether or not states have universal background checks at point of firearm purchase (universal), whether or not firearm possession is prohibited if person is deemed by court to be a danger to oneself or others (danger), whether or not firearm possession is prohibited for people who have committed a violent misdemeanor punishable by more than one year of imprisonment (violentpartial), and whether or not background check process for a concealed carry permit explicitly requires a check of the NICS database (ccbackgroundnics), among other categorical variables. Other numeric variables examined will be the the total number of gun laws in each state, number of yearly incidents per state, the number of people injured in violent gun incidents per state, and the number of individuals killed yearly by violent gun incidents per state. There are 50 (one per state) observations for each variable.</p>
+<pre class="r"><code>gunlaws &lt;- read.csv(&quot;gunlawsandtotalproject.csv&quot;)
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
+## ✓ tibble  2.1.3     ✓ stringr 1.4.0
+## ✓ tidyr   1.0.2     ✓ forcats 0.4.0
+## ✓ readr   1.3.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(sandwich)
+library(lmtest)</code></pre>
+<pre><code>## Loading required package: zoo</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>library(glmnet)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Matrix&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:tidyr&#39;:
+## 
+##     expand, pack, unpack</code></pre>
+<pre><code>## Loaded glmnet 3.0-2</code></pre>
+<pre class="r"><code>gunlaws &lt;- gunlaws %&gt;% filter(year == 2014)
+gunlaws &lt;- as.data.frame(gunlaws)
+
+
+manlock &lt;- manova(cbind(numincidents,numkilled,numinjured)~lockd, data=gunlaws)
+summary(manlock)</code></pre>
+<pre><code>##           Df  Pillai approx F num Df den Df   Pr(&gt;F)   
+## lockd      1 0.24452   4.9628      3     46 0.004563 **
+## Residuals 48                                           
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary.aov(manlock)</code></pre>
+<pre><code>##  Response numincidents :
+##             Df   Sum Sq Mean Sq F value   Pr(&gt;F)   
+## lockd        1  5725390 5725390  7.3218 0.009403 **
+## Residuals   48 37534397  781967                    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response numkilled :
+##             Df  Sum Sq Mean Sq F value  Pr(&gt;F)  
+## lockd        1  289561  289561  3.9948 0.05132 .
+## Residuals   48 3479220   72484                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response numinjured :
+##             Df   Sum Sq Mean Sq F value    Pr(&gt;F)    
+## lockd        1  3562848 3562848  13.418 0.0006209 ***
+## Residuals   48 12744864  265518                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>gunlaws%&gt;%group_by(lockd)%&gt;%summarize(mean(numincidents),mean(numinjured))</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   lockd `mean(numincidents)` `mean(numinjured)`
+##   &lt;int&gt;                &lt;dbl&gt;              &lt;dbl&gt;
+## 1     0                 851.               355.
+## 2     1                1697.              1022.</code></pre>
+<pre class="r"><code>0.95^4</code></pre>
+<pre><code>## [1] 0.8145062</code></pre>
+<pre class="r"><code>1-0.8145062</code></pre>
+<pre><code>## [1] 0.1854938</code></pre>
+<pre class="r"><code>0.05/4</code></pre>
+<pre><code>## [1] 0.0125</code></pre>
+<p>A full MANOVA was performed to determine if there was a difference in mean number of total yearly gun violence incidents, people killed in those incidents, and people injured in those incidents between states that had safety lock laws and state that did not. This safety lock law dictates that all handguns must be sold with either an integrated or external lock and applies to all licensed dealers. One MANOVA test was performed with a significant p-value, so 3 univariate ANOVAs were performed to see which mean response variables differed between levels, which turned out to be mean number of yearly incidents and mean number of people injured in those incidents. Because the categorical variable was binary, a post-hoc t-test was not needed since the significant values in the univariate ANOVAs were already indicative that there was a difference in means between the two levels (having the law and not having the law). Since this was a total of 4 tests, the probability of having at least one Type I error was 0.185. The alpha value was adjusted accordingly to a bonferroni alpha of 0.0125. Even with this adjustment, the p-value from each of the univariate ANOVAs that were originally significant still are. There are many assumptions for MANOVA testing, so there were bound to be some not met by this data. Some that were met were likely independent observations, linear relationships among the dependent variables, and no multicollinearity, since one of the groups wasn’t significant like the others.</p>
+<pre class="r"><code>means &lt;- gunlaws%&gt;%group_by(violentpartial)%&gt;%summarize(mean(numincidents))
+means</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   violentpartial `mean(numincidents)`
+##            &lt;int&gt;                &lt;dbl&gt;
+## 1              0                 987.
+## 2              1                1091.</code></pre>
+<pre class="r"><code>meandiffviolent &lt;- 1090.6875-987.2059
+meandiffviolent</code></pre>
+<pre><code>## [1] 103.4816</code></pre>
+<pre class="r"><code>yesviolent &lt;- gunlaws[gunlaws$violentpartial == 1,]
+yes &lt;- yesviolent$numincidents
+yes &lt;- c(3732, 583, 493, 48, 3095, 183, 1266, 968, 450, 1521, 1903, 110, 398, 2267, 72, 362)
+
+noviolent &lt;- gunlaws[gunlaws$violentpartial == 0,]
+no &lt;- noviolent$numincidents
+no &lt;- c(1318, 146, 556, 572, 556, 3138, 2032, 115, 1203, 569, 381, 977, 1906, 1447, 784, 1272, 128, 347, 376, 230, 320, 2165, 2368, 642, 189, 1660, 1590, 3133, 217, 170, 1273, 656, 1065, 64)
+
+violent &lt;- data.frame(violentlaw=c(rep(&quot;yes&quot;,16),rep(&quot;no&quot;,34)),incidents=c(yes,no))
+head(violent)</code></pre>
+<pre><code>##   violentlaw incidents
+## 1        yes      3732
+## 2        yes       583
+## 3        yes       493
+## 4        yes        48
+## 5        yes      3095
+## 6        yes       183</code></pre>
+<pre class="r"><code>rand_dist&lt;-vector()
+for(i in 1:5000){
+new&lt;-data.frame(incidents=sample(violent$incidents),violentlaw=violent$violentlaw)
+rand_dist[i]&lt;-mean(new[new$violentlaw==&quot;yes&quot;,]$incidents)-
+              mean(new[new$violentlaw==&quot;no&quot;,]$incidents)}
+
+mean(rand_dist&gt;103.4816  | rand_dist&lt; -103.4816)</code></pre>
+<pre><code>## [1] 0.7238</code></pre>
+<pre class="r"><code>rand_distdat &lt;- as.data.frame(rand_dist)
+ggplot(rand_distdat, aes(x=rand_dist)) + geom_histogram() + geom_vline(xintercept = -103.4816) + geom_vline(xintercept = 103.4816)</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="/project2madisonbrenner_files/figure-html/unnamed-chunk-2-1.png" width="672" /> A randomization test was performed on states with and without violent misdemeanor laws to examine the mean differences in yearly number of gun violence incidents between states with and without this law. Null: The mean number of yearly incidents is the same in states with violent misdemeanor laws and without violent misdemeanor laws. Alternative: The mean number of yearly incidents is different in states with universal permit laws and without universal permit laws. A p value of 0.7252 was found for the randomization test, so the null is accepted and the mean number of yearly incidents is the same in states with and without the law tested.</p>
+<pre class="r"><code>fitm &lt;- lm(numincidents ~ universal * ccbackgroundnics, data=gunlaws)
+summary(fitm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = numincidents ~ universal * ccbackgroundnics, data = gunlaws)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1191.0  -746.1  -207.7   488.4  2352.0 
+## 
+## Coefficients:
+##                            Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                   898.1      190.3   4.719 2.24e-05 ***
+## universal                     481.9      466.2   1.034    0.307    
+## ccbackgroundnics              238.1      294.2   0.810    0.422    
+## universal:ccbackgroundnics  -1012.1      848.8  -1.192    0.239    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 951.6 on 46 degrees of freedom
+## Multiple R-squared:  0.03711,    Adjusted R-squared:  -0.02568 
+## F-statistic: 0.591 on 3 and 46 DF,  p-value: 0.624</code></pre>
+<pre class="r"><code>fitmplot &lt;- ggplot(gunlaws, aes(x=universal, y=ccbackgroundnics))+ geom_smooth(method=&quot;lm&quot;)
+fitmplot</code></pre>
+<p><img src="/project2madisonbrenner_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>resids&lt;-fitm$residuals
+fitvals&lt;-fitm$fitted.values
+
+shapiro.test(resids) #normally distributed residuals</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  resids
+## W = 0.88432, p-value = 0.0001517</code></pre>
+<pre class="r"><code>bptest(fitm) #homoskedasticity</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fitm
+## BP = 3.5218, df = 3, p-value = 0.3179</code></pre>
+<pre class="r"><code>coeftest(fitm, vcov = vcovHC(fitm))</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##                            Estimate Std. Error t value  Pr(&gt;|t|)    
+## (Intercept)                  898.08     186.60  4.8129 1.642e-05 ***
+## universal                    481.92     758.41  0.6354    0.5283    
+## ccbackgroundnics             238.14     282.17  0.8440    0.4031    
+## universal:ccbackgroundnics -1012.14     790.56 -1.2803    0.2069    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>The intercept of 898.1 means that for states without a universal background check law and also no law requiring background check for a concealed carry permit explicitly requiring a check of the NICS database, the mean number of yearly gun violence incidents would be 898.1. For universal, the 481.9 coefficient means that, controlling for other factors, if a state has a universal background check law, the number of yearly incidents goes up by 481.9. The ccbackgroundnics coefficient means that, controlling for other factors, having a law requiring background checks with NICS database check for concealed carry increases yearly number of incidents by 238.1. The interaction term means that states with both laws on average decrease the number of yearly incidents by -1012.1.</p>
+<p>For the assumption of homoskedasticity, a Breusch-Pagan test was performed and a p-value of 0.3179 was found, so the null is accepted and the data is homoskedastic. For the assumption of normality, a Shapiro-Wilk test was run which yielded a p-value of 0.0001517, so the data is not normal.</p>
+<p>Regression results were recomputed with robust standard errors. This did not change any of the coefficients since the data was already homoskedastic, but some of the standard errors were decreased. For intercept the SE remained about the same, but for universal the SE increased a lot from 466.2 up to 758.41. Again, for ccbackgroundnics the SE was about the same, and for the interaction term the SE decreased by ~50.</p>
+<p>Based on the R squared value generated in the linear regression, only 0.03711 of the variation in outcome is explained by this model.</p>
+<pre class="r"><code>fitboot &lt;-lm(numincidents~universal*ccbackgroundnics, data=gunlaws)
+resids&lt;-fitboot$residuals
+fitted&lt;-fitboot$fitted.values 
+resid_resamp&lt;-replicate(5000,{
+new_resids&lt;-sample(resids,replace=TRUE) 
+gunlaws$new_y&lt;-fitted+new_resids 
+fit&lt;-lm(new_y~universal*ccbackgroundnics,data=gunlaws)
+coef(fit) 
+})
+
+resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) universal ccbackgroundnics universal:ccbackgroundnics
+## 1    181.9462  442.7069          278.772                   807.3204</code></pre>
+<p>For the bootstrapped residuals standard errors, the intercept and ccbackground again had about the same SE compared to the robust SE. For the boostrapped residual SE, however, the SE for universal decreased significantly from 758.41 down to 442.5116, and for the SE of the interaction term it increased slightly from 790.56 to 807.35 from the robust SE. These bootstrapped residual SEs were very close to the original model.</p>
+<pre class="r"><code>fitg&lt;-glm(danger~numincidents+invoutpatient,data=gunlaws,family=binomial(link=&quot;logit&quot;))
+coeftest(fitg)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                  Estimate  Std. Error z value Pr(&gt;|z|)   
+## (Intercept)   -0.87241833  0.51891567 -1.6812 0.092718 . 
+## numincidents   0.00020786  0.00034378  0.6046 0.545419   
+## invoutpatient  3.31876881  1.09837238  3.0215 0.002515 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>gunlaws$probs&lt;-predict(fitg,type=&quot;response&quot;)
+table(predict=as.numeric(gunlaws$probs&gt;.5),truth=gunlaws$danger)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##     0   23 12  35
+##     1    1 14  15
+##     Sum 24 26  50</code></pre>
+<pre class="r"><code>(23+14)/50</code></pre>
+<pre><code>## [1] 0.74</code></pre>
+<pre class="r"><code>23/24</code></pre>
+<pre><code>## [1] 0.9583333</code></pre>
+<pre class="r"><code>12/26</code></pre>
+<pre><code>## [1] 0.4615385</code></pre>
+<pre class="r"><code>14/15</code></pre>
+<pre><code>## [1] 0.9333333</code></pre>
+<pre class="r"><code>gunlaws$danger &lt;- as.factor(gunlaws$danger)
+gunlaws$logit&lt;-predict(fitg,type=&quot;link&quot;)
+gunlaws%&gt;%ggplot()+geom_density(aes(logit,color=danger,fill=danger, alpha=0.4))+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;)+
+  geom_rug(aes(logit,color=danger))</code></pre>
+<p><img src="/project2madisonbrenner_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>library(plotROC)
+gunlaws$danger &lt;- as.numeric(gunlaws$danger)
+ROCplotm&lt;-ggplot(gunlaws)+geom_roc(aes(d=danger,m=probs), n.cuts=0) 
+ROCplotm</code></pre>
+<pre><code>## Warning in verify_d(data$d): D not labeled 0/1, assuming 1 = 0 and 2 = 1!</code></pre>
+<p><img src="/project2madisonbrenner_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
+<pre class="r"><code>calc_auc(ROCplotm)</code></pre>
+<pre><code>## Warning in verify_d(data$d): D not labeled 0/1, assuming 1 = 0 and 2 = 1!</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7740385</code></pre>
+<pre class="r"><code>gunlaws$danger &lt;- as.factor(gunlaws$danger)
+
+set.seed(1234)
+k=10 
+data&lt;-gunlaws[sample(nrow(gunlaws)),] 
+folds&lt;-cut(seq(1:nrow(gunlaws)),breaks=k,labels=F) 
+diags&lt;-NULL
+for(i in 1:k){
+train&lt;-data[folds!=i,]
+test&lt;-data[folds==i,]
+truth&lt;-test$danger
+fit&lt;-glm(danger~numincidents+invoutpatient,data=train,family=&quot;binomial&quot;)
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean) </code></pre>
+<pre><code>##    acc      sens  spec  ppv       auc
+## 1 0.72 0.6083333 0.925 0.85 0.8083333</code></pre>
+<p>The intercept means that states with 0 incidents and no involuntary commitment gun law have a -0.872 logodds of being a state that has a danger to others gun law. The ‘numincidents’ coefficient means that for states with no involuntary commitment gun law, the logodds of a state having a danger to others gun law increases by 0.000207 for each additional gun violence incident. The ‘invoutpatient’ coefficient means that for states with 0 gunviolence incidents, the logodds for having a danger law increases by 3.318 if the state already has an involuntary commitment gun law.</p>
+<p>Accuracy was found to be 0.74, the specificity was 0.9583333, the sensitivity was 0.4615385, and the precision was 0.9333333. This means that the model appeared to overall be good at predicting whether or not had a danger law, but upon closer inspection it was very good at correctly predicting if a state did not have the law, but did not do well at correctly predicting if the state did have the law (high specificity, low sensitivity).</p>
+<p>The AUC was calculated from the ROC plot of the logistic regression model to be 0.7788462, which means that overall the model is ‘fair’ is predicting whether a state would have the danger law or not.</p>
+<p>10-fold CV was performed to obtain an accuracy of 0.7 and an AUC of 0.75.</p>
+<pre class="r"><code>library(glmnet)
+
+gunlawsless &lt;- gunlaws %&gt;% select(c(state, danger, invoutpatient, universal, felony, dealer, opencarryl, ccbackgroundnics, assault, statechecks, mentalhealth, gunshow, backgroundpurge, lawtotal, numincidents))
+gunlawsless &lt;- as.data.frame(gunlawsless)
+gunlawsless[sapply(gunlawsless, is.integer)] &lt;- lapply(gunlawsless[sapply(gunlawsless, is.integer)], as.factor)
+gunlawsless$lawtotal &lt;- as.numeric(gunlawsless$lawtotal)
+gunlawsless$numincidents &lt;- as.numeric(gunlawsless$numincidents)
+
+y &lt;- as.matrix(gunlawsless$statechecks)
+x &lt;- model.matrix(statechecks~ -1+., data=gunlawsless)
+head(x)</code></pre>
+<pre><code>##   stateAlabama stateAlaska stateArizona stateArkansas stateCalifornia
+## 1            1           0            0             0               0
+## 2            0           1            0             0               0
+## 3            0           0            1             0               0
+## 4            0           0            0             1               0
+## 5            0           0            0             0               1
+## 6            0           0            0             0               0
+##   stateColorado stateConnecticut stateDelaware stateFlorida stateGeorgia
+## 1             0                0             0            0            0
+## 2             0                0             0            0            0
+## 3             0                0             0            0            0
+## 4             0                0             0            0            0
+## 5             0                0             0            0            0
+## 6             1                0             0            0            0
+##   stateHawaii stateIdaho stateIllinois stateIndiana stateIowa stateKansas
+## 1           0          0             0            0         0           0
+## 2           0          0             0            0         0           0
+## 3           0          0             0            0         0           0
+## 4           0          0             0            0         0           0
+## 5           0          0             0            0         0           0
+## 6           0          0             0            0         0           0
+##   stateKentucky stateLouisiana stateMaine stateMaryland stateMassachusetts
+## 1             0              0          0             0                  0
+## 2             0              0          0             0                  0
+## 3             0              0          0             0                  0
+## 4             0              0          0             0                  0
+## 5             0              0          0             0                  0
+## 6             0              0          0             0                  0
+##   stateMichigan stateMinnesota stateMississippi stateMissouri stateMontana
+## 1             0              0                0             0            0
+## 2             0              0                0             0            0
+## 3             0              0                0             0            0
+## 4             0              0                0             0            0
+## 5             0              0                0             0            0
+## 6             0              0                0             0            0
+##   stateNebraska stateNevada stateNew Hampshire stateNew Jersey stateNew Mexico
+## 1             0           0                  0               0               0
+## 2             0           0                  0               0               0
+## 3             0           0                  0               0               0
+## 4             0           0                  0               0               0
+## 5             0           0                  0               0               0
+## 6             0           0                  0               0               0
+##   stateNew York stateNorth Carolina stateNorth Dakota stateOhio stateOklahoma
+## 1             0                   0                 0         0             0
+## 2             0                   0                 0         0             0
+## 3             0                   0                 0         0             0
+## 4             0                   0                 0         0             0
+## 5             0                   0                 0         0             0
+## 6             0                   0                 0         0             0
+##   stateOregon statePennsylvania stateRhode Island stateSouth Carolina
+## 1           0                 0                 0                   0
+## 2           0                 0                 0                   0
+## 3           0                 0                 0                   0
+## 4           0                 0                 0                   0
+## 5           0                 0                 0                   0
+## 6           0                 0                 0                   0
+##   stateSouth Dakota stateTennessee stateTexas stateUtah stateVermont
+## 1                 0              0          0         0            0
+## 2                 0              0          0         0            0
+## 3                 0              0          0         0            0
+## 4                 0              0          0         0            0
+## 5                 0              0          0         0            0
+## 6                 0              0          0         0            0
+##   stateVirginia stateWashington stateWest Virginia stateWisconsin stateWyoming
+## 1             0               0                  0              0            0
+## 2             0               0                  0              0            0
+## 3             0               0                  0              0            0
+## 4             0               0                  0              0            0
+## 5             0               0                  0              0            0
+## 6             0               0                  0              0            0
+##   danger2 invoutpatient1 universal1 felony1 dealer1 opencarryl1
+## 1       0              0          0       0       0           0
+## 2       0              0          0       1       0           0
+## 3       1              1          0       1       0           0
+## 4       1              0          0       1       0           0
+## 5       1              0          1       1       1           1
+## 6       0              0          1       1       0           0
+##   ccbackgroundnics1 assault1 mentalhealth1 gunshow1 backgroundpurge1 lawtotal
+## 1                 1        0             0        0                0        8
+## 2                 0        0             0        0                0        1
+## 3                 0        0             0        0                0        6
+## 4                 1        0             0        0                0        9
+## 5                 0        1             1        1                1       30
+## 6                 1        0             0        1                1       18
+##   numincidents
+## 1           35
+## 2            7
+## 3           21
+## 4           23
+## 5           49
+## 6           21</code></pre>
+<pre class="r"><code>set.seed(1234)
+cv2&lt;-cv.glmnet(x,y,family=&#39;binomial&#39;)
+lasso2&lt;-glmnet(x,y,family=&#39;binomial&#39;,lambda=cv2$lambda.1se)
+coef(cv2)</code></pre>
+<pre><code>## 64 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                              1
+## (Intercept)         -2.4859011
+## stateAlabama         .        
+## stateAlaska          .        
+## stateArizona         .        
+## stateArkansas        .        
+## stateCalifornia      .        
+## stateColorado        .        
+## stateConnecticut     .        
+## stateDelaware        .        
+## stateFlorida         .        
+## stateGeorgia         .        
+## stateHawaii          .        
+## stateIdaho           .        
+## stateIllinois        .        
+## stateIndiana         .        
+## stateIowa            .        
+## stateKansas          .        
+## stateKentucky        .        
+## stateLouisiana       .        
+## stateMaine           .        
+## stateMaryland        .        
+## stateMassachusetts   .        
+## stateMichigan        .        
+## stateMinnesota       .        
+## stateMississippi     .        
+## stateMissouri        .        
+## stateMontana         .        
+## stateNebraska        .        
+## stateNevada          .        
+## stateNew Hampshire   .        
+## stateNew Jersey      .        
+## stateNew Mexico      .        
+## stateNew York        .        
+## stateNorth Carolina  .        
+## stateNorth Dakota    .        
+## stateOhio            .        
+## stateOklahoma        .        
+## stateOregon          .        
+## statePennsylvania    .        
+## stateRhode Island    .        
+## stateSouth Carolina  .        
+## stateSouth Dakota    .        
+## stateTennessee       .        
+## stateTexas           .        
+## stateUtah            .        
+## stateVermont         .        
+## stateVirginia        .        
+## stateWashington      .        
+## stateWest Virginia   .        
+## stateWisconsin       .        
+## stateWyoming         .        
+## danger2              .        
+## invoutpatient1       .        
+## universal1           .        
+## felony1              .        
+## dealer1              1.5511894
+## opencarryl1          0.5694336
+## ccbackgroundnics1    .        
+## assault1             .        
+## mentalhealth1        .        
+## gunshow1             1.3743841
+## backgroundpurge1     0.7211158
+## lawtotal             .        
+## numincidents         .</code></pre>
+<pre class="r"><code>set.seed(1234)
+k=10 
+gunlawsless$dealer1&lt;-ifelse(gunlawsless$dealer==&quot;1&quot;,1,0)
+gunlawsless$opencarryl1&lt;-ifelse(gunlawsless$opencarryl==&quot;1&quot;,1,0)
+gunlawsless$gunshow1&lt;-ifelse(gunlawsless$gunshow==&quot;1&quot;,1,0)
+gunlawsless$backgroundpurge1&lt;-ifelse(gunlawsless$backgroundpurge==&quot;1&quot;,1,0)
+
+data1&lt;-gunlawsless[sample(nrow(gunlawsless)),] 
+folds&lt;-cut(seq(1:nrow(gunlawsless)),breaks=k,labels=F) 
+diags&lt;-NULL
+for(i in 1:k){
+train&lt;-data1[folds!=i,]
+test&lt;-data1[folds==i,]
+truth&lt;-test$statechecks
+fit&lt;-glm(statechecks~dealer1+opencarryl1+gunshow1+backgroundpurge1+lawtotal,data=train,family=&quot;binomial&quot;)
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+}</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>diags%&gt;%summarize_all(mean)</code></pre>
+<pre><code>##    acc sens spec ppv    auc
+## 1 0.92  NaN 0.95 NaN 0.7875</code></pre>
+<p>For the Lasso, I chose 14 variables of the entire gunlaws dataset to examine, since the number of predictor variables cannot be greater than the number of observations. The retained variables for best predictors of whether or not a state would have a law requiring that the state conducts separate background checks, beyond the federal NICS check, for all firearms, were the dealer law, open carry of long guns law, gunshow loophole law, background check retainment law, and total number of laws that a state has. The accuracy of the 10 fold CV based on the output variables of Lasso was 0.94, which is very good overall and much higher than the accuracy of 0.7 in part 5. Even though they were different variables being predicted, this is indicative that using the best Lasso predictors gives a more accurate model.</p>
+<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

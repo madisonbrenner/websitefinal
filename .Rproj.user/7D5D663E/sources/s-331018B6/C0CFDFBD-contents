@@ -1,0 +1,217 @@
+---
+title: "Project 2: Gun Violence Incidents in the United States in 2014 - Madison Brenner"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+class_diag<-function(probs,truth){
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+prediction<-ifelse(probs>.5,1,0)
+acc=mean(truth==prediction)
+sens=mean(prediction[truth==1]==1)
+spec=mean(prediction[truth==0]==0)
+ppv=mean(truth[prediction==1]==1)
+#CALCULATE EXACT AUC
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth))
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc)
+}
+```
+
+The data chosen for this project was a large dataset compiling every gun violence indident and the number of people injured or killed in each incident. This was merged with a dataset that showed each possible gun law a state did and did not have, and this was merged with the first dataset to only display gun law and violence incidents from the entire year of 2014. The dataset contains many variables. The categorical ones that will be focused on for the project are the categories of whether or not states have universal background checks at point of firearm purchase (universal), whether or not firearm possession is prohibited if person is deemed by court to be a danger to oneself or others (danger), whether or not firearm possession is prohibited for people who have committed a violent misdemeanor punishable by more than one year of imprisonment (violentpartial), and whether or not background check process for a concealed carry permit explicitly requires a check of the NICS database (ccbackgroundnics), among other categorical variables. Other numeric variables examined will be the the total number of gun laws in each state, number of yearly incidents per state, the number of people injured in violent gun incidents per state, and the number of individuals killed yearly by violent gun incidents per state. There are 50 (one per state) observations for each variable.
+
+```{R}
+gunlaws <- read.csv("gunlawsandtotalproject.csv")
+library(dplyr)
+library(tidyverse)
+library(sandwich)
+library(lmtest)
+library(glmnet)
+
+gunlaws <- gunlaws %>% filter(year == 2014)
+gunlaws <- as.data.frame(gunlaws)
+
+
+manlock <- manova(cbind(numincidents,numkilled,numinjured)~lockd, data=gunlaws)
+summary(manlock)
+
+summary.aov(manlock)
+gunlaws%>%group_by(lockd)%>%summarize(mean(numincidents),mean(numinjured))
+
+0.95^4
+1-0.8145062
+0.05/4
+```
+
+ A full MANOVA was performed to determine if there was a difference in mean number of total yearly gun violence incidents, people killed in those incidents, and people injured in those incidents between states that had safety lock laws and state that did not. This safety lock law dictates that all handguns must be sold with either an integrated or external lock and applies to all licensed dealers. One MANOVA test was performed with a significant p-value, so 3 univariate ANOVAs were performed to see which mean response variables differed between levels, which turned out to be mean number of yearly incidents and mean number of people injured in those incidents. Because the categorical variable was binary, a post-hoc t-test was not needed since the significant values in the univariate ANOVAs were already indicative that there was a difference in means between the two levels (having the law and not having the law). Since this was a total of 4 tests, the probability of having at least one Type I error was 0.185. The alpha value was adjusted accordingly to a bonferroni alpha of 0.0125. Even with this adjustment, the p-value from each of the univariate ANOVAs that were originally significant still are. 
+  There are many assumptions for MANOVA testing, so there were bound to be some not met by this data. Some that were met were likely independent observations, linear relationships among the dependent variables, and no multicollinearity, since one of the groups wasn't significant like the others.
+
+```{R}
+means <- gunlaws%>%group_by(violentpartial)%>%summarize(mean(numincidents))
+means
+meandiffviolent <- 1090.6875-987.2059
+meandiffviolent
+
+yesviolent <- gunlaws[gunlaws$violentpartial == 1,]
+yes <- yesviolent$numincidents
+yes <- c(3732, 583, 493, 48, 3095, 183, 1266, 968, 450, 1521, 1903, 110, 398, 2267, 72, 362)
+
+noviolent <- gunlaws[gunlaws$violentpartial == 0,]
+no <- noviolent$numincidents
+no <- c(1318, 146, 556, 572, 556, 3138, 2032, 115, 1203, 569, 381, 977, 1906, 1447, 784, 1272, 128, 347, 376, 230, 320, 2165, 2368, 642, 189, 1660, 1590, 3133, 217, 170, 1273, 656, 1065, 64)
+
+violent <- data.frame(violentlaw=c(rep("yes",16),rep("no",34)),incidents=c(yes,no))
+head(violent)
+
+rand_dist<-vector()
+for(i in 1:5000){
+new<-data.frame(incidents=sample(violent$incidents),violentlaw=violent$violentlaw)
+rand_dist[i]<-mean(new[new$violentlaw=="yes",]$incidents)-
+              mean(new[new$violentlaw=="no",]$incidents)}
+
+mean(rand_dist>103.4816  | rand_dist< -103.4816)
+
+rand_distdat <- as.data.frame(rand_dist)
+ggplot(rand_distdat, aes(x=rand_dist)) + geom_histogram() + geom_vline(xintercept = -103.4816) + geom_vline(xintercept = 103.4816)
+```
+A randomization test was performed on states with and without violent misdemeanor laws to examine the mean differences in yearly number of gun violence incidents between states with and without this law.
+Null: The mean number of yearly incidents is the same in states with violent misdemeanor laws and without violent misdemeanor laws.
+Alternative: The mean number of yearly incidents is different in states with universal permit laws and without universal permit laws. 
+A p value of 0.7252 was found for the randomization test, so the null is accepted and the mean number of yearly incidents is the same in states with and without the law tested. 
+
+```{R}
+fitm <- lm(numincidents ~ universal * ccbackgroundnics, data=gunlaws)
+summary(fitm)
+fitmplot <- ggplot(gunlaws, aes(x=universal, y=ccbackgroundnics))+ geom_smooth(method="lm")
+fitmplot
+
+resids<-fitm$residuals
+fitvals<-fitm$fitted.values
+
+shapiro.test(resids) #normally distributed residuals
+bptest(fitm) #homoskedasticity
+
+coeftest(fitm, vcov = vcovHC(fitm))
+```
+The intercept of 898.1 means that for states without a universal background check law and also no law requiring background check for a concealed carry permit explicitly requiring a check of the NICS database, the mean number of yearly gun violence incidents would be 898.1. For universal, the 481.9 coefficient means that, controlling for other factors, if a state has a universal background check law, the number of yearly incidents goes up by 481.9. The ccbackgroundnics coefficient means that, controlling for other factors, having a law requiring background checks with NICS database check for concealed carry increases yearly number of incidents by 238.1. The interaction term means that states with both laws on average decrease the number of yearly incidents by -1012.1.
+
+For the assumption of homoskedasticity, a Breusch-Pagan test was performed and a p-value of 0.3179 was found, so the null is accepted and the data is homoskedastic. For the assumption of normality, a Shapiro-Wilk test was run which yielded a p-value of 0.0001517, so the data is not normal. 
+
+Regression results were recomputed with robust standard errors. This did not change any of the coefficients since the data was already homoskedastic, but some of the standard errors were decreased. For intercept the SE remained about the same, but for universal the SE increased a lot from 466.2 up to 758.41. Again, for ccbackgroundnics the SE was about the same, and for the interaction term the SE decreased by ~50.
+
+Based on the R squared value generated in the linear regression, only 0.03711 of the variation in outcome is explained by this model. 
+
+```{R}
+fitboot <-lm(numincidents~universal*ccbackgroundnics, data=gunlaws)
+resids<-fitboot$residuals
+fitted<-fitboot$fitted.values 
+resid_resamp<-replicate(5000,{
+new_resids<-sample(resids,replace=TRUE) 
+gunlaws$new_y<-fitted+new_resids 
+fit<-lm(new_y~universal*ccbackgroundnics,data=gunlaws)
+coef(fit) 
+})
+
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+For the bootstrapped residuals standard errors, the intercept and ccbackground again had about the same SE compared to the robust SE. For the boostrapped residual SE, however, the SE for universal decreased significantly from 758.41 down to 442.5116, and for the SE of the interaction term it increased slightly from 790.56 to 807.35 from the robust SE. These bootstrapped residual SEs were very close to the original model. 
+
+```{R}
+fitg<-glm(danger~numincidents+invoutpatient,data=gunlaws,family=binomial(link="logit"))
+coeftest(fitg)
+
+gunlaws$probs<-predict(fitg,type="response")
+table(predict=as.numeric(gunlaws$probs>.5),truth=gunlaws$danger)%>%addmargins
+(23+14)/50
+23/24
+12/26
+14/15
+
+gunlaws$danger <- as.factor(gunlaws$danger)
+gunlaws$logit<-predict(fitg,type="link")
+gunlaws%>%ggplot()+geom_density(aes(logit,color=danger,fill=danger, alpha=0.4))+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("logit (log-odds)")+
+  geom_rug(aes(logit,color=danger))
+
+library(plotROC)
+gunlaws$danger <- as.numeric(gunlaws$danger)
+ROCplotm<-ggplot(gunlaws)+geom_roc(aes(d=danger,m=probs), n.cuts=0) 
+ROCplotm
+calc_auc(ROCplotm)
+
+gunlaws$danger <- as.factor(gunlaws$danger)
+
+set.seed(1234)
+k=10 
+data<-gunlaws[sample(nrow(gunlaws)),] 
+folds<-cut(seq(1:nrow(gunlaws)),breaks=k,labels=F) 
+diags<-NULL
+for(i in 1:k){
+train<-data[folds!=i,]
+test<-data[folds==i,]
+truth<-test$danger
+fit<-glm(danger~numincidents+invoutpatient,data=train,family="binomial")
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean) 
+
+```
+The intercept means that states with 0 incidents and no involuntary commitment gun law have a -0.872 logodds of being a state that has a danger to others gun law. The 'numincidents' coefficient means that for states with no involuntary commitment gun law, the logodds of a state having a danger to others gun law increases by 0.000207 for each additional gun violence incident. The 'invoutpatient' coefficient means that for states with 0 gunviolence incidents, the logodds for having a danger law increases by 3.318 if the state already has an involuntary commitment gun law. 
+
+Accuracy was found to be 0.74, the specificity was 0.9583333, the sensitivity was 0.4615385, and the precision was 0.9333333. This means that the model appeared to overall be good at predicting whether or not had a danger law, but upon closer inspection it was very good at correctly predicting if a state did not have the law, but did not do well at correctly predicting if the state did have the law (high specificity, low sensitivity).
+
+The AUC was calculated from the ROC plot of the logistic regression model to be 0.7788462, which means that overall the model is 'fair' is predicting whether a state would have the danger law or not.
+
+10-fold CV was performed to obtain an accuracy of 0.7 and an AUC of 0.75.
+
+```{R}
+library(glmnet)
+
+gunlawsless <- gunlaws %>% select(c(state, danger, invoutpatient, universal, felony, dealer, opencarryl, ccbackgroundnics, assault, statechecks, mentalhealth, gunshow, backgroundpurge, lawtotal, numincidents))
+gunlawsless <- as.data.frame(gunlawsless)
+gunlawsless[sapply(gunlawsless, is.integer)] <- lapply(gunlawsless[sapply(gunlawsless, is.integer)], as.factor)
+gunlawsless$lawtotal <- as.numeric(gunlawsless$lawtotal)
+gunlawsless$numincidents <- as.numeric(gunlawsless$numincidents)
+
+y <- as.matrix(gunlawsless$statechecks)
+x <- model.matrix(statechecks~ -1+., data=gunlawsless)
+head(x)
+set.seed(1234)
+cv2<-cv.glmnet(x,y,family='binomial')
+lasso2<-glmnet(x,y,family='binomial',lambda=cv2$lambda.1se)
+coef(cv2)
+
+set.seed(1234)
+k=10 
+gunlawsless$dealer1<-ifelse(gunlawsless$dealer=="1",1,0)
+gunlawsless$opencarryl1<-ifelse(gunlawsless$opencarryl=="1",1,0)
+gunlawsless$gunshow1<-ifelse(gunlawsless$gunshow=="1",1,0)
+gunlawsless$backgroundpurge1<-ifelse(gunlawsless$backgroundpurge=="1",1,0)
+
+data1<-gunlawsless[sample(nrow(gunlawsless)),] 
+folds<-cut(seq(1:nrow(gunlawsless)),breaks=k,labels=F) 
+diags<-NULL
+for(i in 1:k){
+train<-data1[folds!=i,]
+test<-data1[folds==i,]
+truth<-test$statechecks
+fit<-glm(statechecks~dealer1+opencarryl1+gunshow1+backgroundpurge1+lawtotal,data=train,family="binomial")
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+
+```
+For the Lasso, I chose 14 variables of the entire gunlaws dataset to examine, since the number of predictor variables cannot be greater than the number of observations. The retained variables for best predictors of whether or not a state would have a law requiring that the state conducts separate background checks, beyond the federal NICS check, for all firearms, were the dealer law, open carry of long guns law, gunshow loophole law, background check retainment law, and total number of laws that a state has. The accuracy of the 10 fold CV based on the output variables of Lasso was 0.94, which is very good overall and much higher than the accuracy of 0.7 in part 5. Even though they were different variables being predicted, this is indicative that using the best Lasso predictors gives a more accurate model.
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

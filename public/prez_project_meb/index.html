@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Madison Brenner" />
+    <meta name="description" content="Describe your website">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Election Data by State for the 2016 Presidential Elections</title>
+    <meta name="generator" content="Hugo 0.70.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/project/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/prez_project_meb/">Election Data by State for the 2016 Presidential Elections</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<p>Madison Brenner mb57363</p>
+<p>The following data sets are titled ‘Election16’ ‘RaceData16’ and were pulled from <a href="https://vincentarelbundock.github.io/Rdatasets/datasets.html" class="uri">https://vincentarelbundock.github.io/Rdatasets/datasets.html</a> and the U.S. Census website. These two datasets together compile statistics on the demographics of voters by state in the 2016 presidential election. Election16 datasets contain the fifty states, the abbreviation for each state, the per capita income by state, the percent of high school graduates, percent of college graduates, percent of individuals with advanced degrees, the difference between republican and democrat percentages by state, and finally the winner of the election. RaceData16 contains the state, and then breaks down the overall population of the state by race. These specific variables were compiled into these datasets based on information from U.S. Census data, U.S. Census estimates, and Gallup polls. I personally find political data very interesting, and think that this past presidential elections was one of the most important and historical victories to date. While this does not explicitly take into account the percent of registered voters by race, I still expect to find some correlation between minority percentages in states and Democratic versus Republican percentages, and I also think that there will be interesting differences between states that are primarily one party but may have voted overall against their party. Finally, I expect that there will be obvious correlations between education levels and party affiliation between states.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
+## ✓ tibble  2.1.3     ✓ stringr 1.4.0
+## ✓ tidyr   1.0.2     ✓ forcats 0.4.0
+## ✓ readr   1.3.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(dplyr)
+election16 &lt;- read.csv(&quot;~/Downloads/election16.csv&quot;)
+race_data_2016 &lt;- read.csv(&quot;~/Downloads/race.data.2016.csv&quot;)
+election16 &lt;- election16%&gt;% mutate(State=str_trim(State,&quot;right&quot;))
+race_data_2016&lt;-race_data_2016%&gt;%mutate_at(2:8,function(x)as.numeric(gsub(&quot;,&quot;,&quot;&quot;,x)))
+fulldat &lt;- election16 %&gt;% left_join(race_data_2016, by=c(&quot;State&quot;=&quot;Geography&quot;))</code></pre>
+<pre><code>## Warning: Column `State`/`Geography` joining character vector and factor,
+## coercing into character vector</code></pre>
+<pre class="r"><code>glimpse(fulldat)</code></pre>
+<pre><code>## Observations: 50
+## Variables: 16
+## $ X                                          &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9,…
+## $ State                                      &lt;chr&gt; &quot;Alabama&quot;, &quot;Alaska&quot;, &quot;Ariz…
+## $ Abr                                        &lt;fct&gt; AL, AK, AZ, AR, CA, CO, CT…
+## $ Income                                     &lt;int&gt; 43623, 72515, 50255, 41371…
+## $ HS                                         &lt;dbl&gt; 84.3, 92.1, 86.0, 84.8, 81…
+## $ BA                                         &lt;dbl&gt; 23.5, 28.0, 27.5, 21.1, 31…
+## $ Adv                                        &lt;dbl&gt; 8.7, 10.1, 10.2, 7.5, 11.6…
+## $ Dem.Rep                                    &lt;int&gt; -17, -17, -1, -7, 16, -1, …
+## $ TrumpWin                                   &lt;int&gt; 1, 1, 1, 1, 0, 0, 0, 0, 1,…
+## $ Total                                      &lt;dbl&gt; 4779736, 710231, 6392017, …
+## $ White                                      &lt;dbl&gt; 3362877, 483873, 5418483, …
+## $ Black.or.African.American                  &lt;dbl&gt; 1259224, 24441, 280905, 45…
+## $ American.Indian.and.Alaska.Native          &lt;dbl&gt; 32903, 106268, 335278, 261…
+## $ Asian                                      &lt;dbl&gt; 55240, 38882, 188456, 3753…
+## $ Native.Hawaiian.and.Other.Pacific.Islander &lt;dbl&gt; 5208, 7662, 16112, 6685, 1…
+## $ Two.or.More.Races                          &lt;dbl&gt; 64284, 49105, 152783, 4913…</code></pre>
+<p>For the joining, I chose left join so that only data from matching states from ‘RaceData2016’ would be added to the ‘election16’ dataset. This is because I only wanted the data from the 50 U.S. states, and the RaceData16 dataset also contained data from the District of Columbia as its own ‘state’ variable, thus a left join would ensure that only the matching 50 states would be retained in the joined dataset since ‘election16’ had no equivalent D.C. row. A possible problem in analyzing this new dataset is that D.C. had a very high proportion of minority citizens, which may have been useful for examining correlations, however, for continuity, I thought it best to stick with the 50 states.</p>
+<pre class="r"><code>wider &lt;- fulldat %&gt;% pivot_wider(names_from=&quot;TrumpWin&quot;, values_from=&quot;Total&quot;)
+glimpse(wider)</code></pre>
+<pre><code>## Observations: 50
+## Variables: 16
+## $ X                                          &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9,…
+## $ State                                      &lt;chr&gt; &quot;Alabama&quot;, &quot;Alaska&quot;, &quot;Ariz…
+## $ Abr                                        &lt;fct&gt; AL, AK, AZ, AR, CA, CO, CT…
+## $ Income                                     &lt;int&gt; 43623, 72515, 50255, 41371…
+## $ HS                                         &lt;dbl&gt; 84.3, 92.1, 86.0, 84.8, 81…
+## $ BA                                         &lt;dbl&gt; 23.5, 28.0, 27.5, 21.1, 31…
+## $ Adv                                        &lt;dbl&gt; 8.7, 10.1, 10.2, 7.5, 11.6…
+## $ Dem.Rep                                    &lt;int&gt; -17, -17, -1, -7, 16, -1, …
+## $ White                                      &lt;dbl&gt; 3362877, 483873, 5418483, …
+## $ Black.or.African.American                  &lt;dbl&gt; 1259224, 24441, 280905, 45…
+## $ American.Indian.and.Alaska.Native          &lt;dbl&gt; 32903, 106268, 335278, 261…
+## $ Asian                                      &lt;dbl&gt; 55240, 38882, 188456, 3753…
+## $ Native.Hawaiian.and.Other.Pacific.Islander &lt;dbl&gt; 5208, 7662, 16112, 6685, 1…
+## $ Two.or.More.Races                          &lt;dbl&gt; 64284, 49105, 152783, 4913…
+## $ `1`                                        &lt;dbl&gt; 4779736, 710231, 6392017, …
+## $ `0`                                        &lt;dbl&gt; NA, NA, NA, NA, 37253956, …</code></pre>
+<pre class="r"><code>longer &lt;- wider %&gt;% pivot_longer(c(&quot;1&quot;,&quot;0&quot;), names_to=&quot;TrumpWin&quot;, values_to=&quot;Total&quot;)
+glimpse(longer)</code></pre>
+<pre><code>## Observations: 100
+## Variables: 16
+## $ X                                          &lt;int&gt; 1, 1, 2, 2, 3, 3, 4, 4, 5,…
+## $ State                                      &lt;chr&gt; &quot;Alabama&quot;, &quot;Alabama&quot;, &quot;Ala…
+## $ Abr                                        &lt;fct&gt; AL, AL, AK, AK, AZ, AZ, AR…
+## $ Income                                     &lt;int&gt; 43623, 43623, 72515, 72515…
+## $ HS                                         &lt;dbl&gt; 84.3, 84.3, 92.1, 92.1, 86…
+## $ BA                                         &lt;dbl&gt; 23.5, 23.5, 28.0, 28.0, 27…
+## $ Adv                                        &lt;dbl&gt; 8.7, 8.7, 10.1, 10.1, 10.2…
+## $ Dem.Rep                                    &lt;int&gt; -17, -17, -17, -17, -1, -1…
+## $ White                                      &lt;dbl&gt; 3362877, 3362877, 483873, …
+## $ Black.or.African.American                  &lt;dbl&gt; 1259224, 1259224, 24441, 2…
+## $ American.Indian.and.Alaska.Native          &lt;dbl&gt; 32903, 32903, 106268, 1062…
+## $ Asian                                      &lt;dbl&gt; 55240, 55240, 38882, 38882…
+## $ Native.Hawaiian.and.Other.Pacific.Islander &lt;dbl&gt; 5208, 5208, 7662, 7662, 16…
+## $ Two.or.More.Races                          &lt;dbl&gt; 64284, 64284, 49105, 49105…
+## $ TrumpWin                                   &lt;chr&gt; &quot;1&quot;, &quot;0&quot;, &quot;1&quot;, &quot;0&quot;, &quot;1&quot;, &quot;…
+## $ Total                                      &lt;dbl&gt; 4779736, NA, 710231, NA, 6…</code></pre>
+<pre class="r"><code>longer &lt;- longer%&gt;%na.omit()</code></pre>
+<p>The data was already tidy, so I pivoted a column wider to prove that the information does not make as much sense presented in this way and that its current, tidy version is most readable. After making it wider, it split the TrumpWin into two columns, one for winning (1) and one for losing (0). This makes it more difficult to read since there are so many resulting N/A values. I then pivoted it back longer, which caused the ‘Total’ column to double up with N/A values, so I removed the N/As with na.omit() in order to return the dataset to its tidy, original setup.</p>
+<pre class="r"><code>fulldat &lt;- fulldat %&gt;% select(-c(&quot;X&quot;,&quot;Abr&quot;))
+fulldat &lt;- fulldat %&gt;% mutate(PercentWhite=(White/Total)*100)
+
+majoritywhite &lt;- fulldat %&gt;% select(c(&quot;State&quot;, &quot;Dem.Rep&quot;, &quot;TrumpWin&quot;, &quot;PercentWhite&quot;)) %&gt;% group_by(State) %&gt;% filter(PercentWhite&gt;=50) %&gt;% arrange(desc(PercentWhite))
+majoritywhite</code></pre>
+<pre><code>## # A tibble: 49 x 4
+## # Groups:   State [49]
+##    State         Dem.Rep TrumpWin PercentWhite
+##    &lt;chr&gt;           &lt;int&gt;    &lt;int&gt;        &lt;dbl&gt;
+##  1 Vermont            22        0         95.7
+##  2 Maine              -4        0         95.6
+##  3 New Hampshire      -9        0         94.8
+##  4 West Virginia      -6        1         94.3
+##  5 Idaho             -30        1         94.2
+##  6 Wyoming           -32        1         93.9
+##  7 Iowa               -3        1         93.2
+##  8 Utah              -30        1         92.2
+##  9 North Dakota      -21        1         90.6
+## 10 Nebraska           -9        1         90.3
+## # … with 39 more rows</code></pre>
+<pre class="r"><code>fulldat %&gt;% filter(Dem.Rep&gt;0) %&gt;% summarize(mean(Income))</code></pre>
+<pre><code>##   mean(Income)
+## 1     59760.72</code></pre>
+<pre class="r"><code>fulldat %&gt;% filter(Dem.Rep&lt;0) %&gt;% summarize(mean(Income))</code></pre>
+<pre><code>##   mean(Income)
+## 1     51453.43</code></pre>
+<pre class="r"><code>59760.72-51453.43</code></pre>
+<pre><code>## [1] 8307.29</code></pre>
+<pre class="r"><code>#install.packages(&quot;ggpubr&quot;)
+#library(&quot;ggpubr&quot;)
+percentwhitelose &lt;- fulldat %&gt;% group_by(TrumpWin) %&gt;% filter(TrumpWin==0) %&gt;% arrange(desc(PercentWhite)) %&gt;% select(c(&quot;State&quot;, &quot;TrumpWin&quot;, &quot;PercentWhite&quot;))
+
+fivenum(percentwhitelose$PercentWhite)</code></pre>
+<pre><code>## [1] 25.65984 73.05056 82.43782 87.83314 95.66130</code></pre>
+<pre class="r"><code>percentwhitewin &lt;- fulldat %&gt;% group_by(TrumpWin) %&gt;% filter(TrumpWin==1) %&gt;% arrange(desc(PercentWhite)) %&gt;% select(c(&quot;State&quot;, &quot;TrumpWin&quot;, &quot;PercentWhite&quot;))
+
+fivenum(percentwhitewin$PercentWhite)</code></pre>
+<pre><code>## [1] 60.30374 76.01288 84.03985 90.10668 94.25357</code></pre>
+<pre class="r"><code>fulldat &lt;- fulldat %&gt;% mutate(&quot;Party&quot; = ifelse(Dem.Rep &gt; 0, &quot;Dem&quot;, &quot;Rep&quot;)) 
+glimpse(fulldat)</code></pre>
+<pre><code>## Observations: 50
+## Variables: 16
+## $ State                                      &lt;chr&gt; &quot;Alabama&quot;, &quot;Alaska&quot;, &quot;Ariz…
+## $ Income                                     &lt;int&gt; 43623, 72515, 50255, 41371…
+## $ HS                                         &lt;dbl&gt; 84.3, 92.1, 86.0, 84.8, 81…
+## $ BA                                         &lt;dbl&gt; 23.5, 28.0, 27.5, 21.1, 31…
+## $ Adv                                        &lt;dbl&gt; 8.7, 10.1, 10.2, 7.5, 11.6…
+## $ Dem.Rep                                    &lt;int&gt; -17, -17, -1, -7, 16, -1, …
+## $ TrumpWin                                   &lt;int&gt; 1, 1, 1, 1, 0, 0, 0, 0, 1,…
+## $ Total                                      &lt;dbl&gt; 4779736, 710231, 6392017, …
+## $ White                                      &lt;dbl&gt; 3362877, 483873, 5418483, …
+## $ Black.or.African.American                  &lt;dbl&gt; 1259224, 24441, 280905, 45…
+## $ American.Indian.and.Alaska.Native          &lt;dbl&gt; 32903, 106268, 335278, 261…
+## $ Asian                                      &lt;dbl&gt; 55240, 38882, 188456, 3753…
+## $ Native.Hawaiian.and.Other.Pacific.Islander &lt;dbl&gt; 5208, 7662, 16112, 6685, 1…
+## $ Two.or.More.Races                          &lt;dbl&gt; 64284, 49105, 152783, 4913…
+## $ PercentWhite                               &lt;dbl&gt; 70.35696, 68.12896, 84.769…
+## $ Party                                      &lt;chr&gt; &quot;Rep&quot;, &quot;Rep&quot;, &quot;Rep&quot;, &quot;Rep&quot;…</code></pre>
+<pre class="r"><code>Party &lt;- as.factor(fulldat$Party)
+fulldat %&gt;% group_by(Party) %&gt;% summarize(mean(HS)) </code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Party `mean(HS)`
+##   &lt;chr&gt;      &lt;dbl&gt;
+## 1 Dem         88.5
+## 2 Rep         88.1</code></pre>
+<pre class="r"><code>min(fulldat$BA)</code></pre>
+<pre><code>## [1] 19.2</code></pre>
+<pre class="r"><code>max(fulldat$BA)</code></pre>
+<pre><code>## [1] 40.5</code></pre>
+<pre class="r"><code>median(fulldat$BA)</code></pre>
+<pre><code>## [1] 28.2</code></pre>
+<pre class="r"><code>quantile(fulldat$BA)</code></pre>
+<pre><code>##     0%    25%    50%    75%   100% 
+## 19.200 25.950 28.200 31.775 40.500</code></pre>
+<pre class="r"><code>first &lt;- fulldat %&gt;% group_by(State) %&gt;% filter(BA&gt;=19.2&amp;BA&lt;25.95)
+second &lt;- fulldat %&gt;% group_by(State) %&gt;% filter(BA&gt;=25.95&amp;BA&lt;28.2)
+third &lt;- fulldat %&gt;% group_by(State) %&gt;% filter(BA&gt;=28.2&amp;BA&lt;31.775)
+fourth &lt;- fulldat %&gt;% group_by(State) %&gt;% filter(BA&gt;=31.775&amp;BA&lt;=40.5)
+
+mean(first$Dem.Rep)</code></pre>
+<pre><code>## [1] -11.38462</code></pre>
+<pre class="r"><code>mean(second$Dem.Rep)</code></pre>
+<pre><code>## [1] -4.666667</code></pre>
+<pre class="r"><code>mean(third$Dem.Rep)</code></pre>
+<pre><code>## [1] -1.833333</code></pre>
+<pre class="r"><code>mean(fourth$Dem.Rep)</code></pre>
+<pre><code>## [1] 9.461538</code></pre>
+<pre class="r"><code>fulldat %&gt;% group_by(Party) %&gt;% summarize(mean(Black.or.African.American)) </code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Party `mean(Black.or.African.American)`
+##   &lt;chr&gt;                             &lt;dbl&gt;
+## 1 Dem                            1031167.
+## 2 Rep                             668101.</code></pre>
+<pre class="r"><code>fulldat %&gt;% filter(TrumpWin==1) %&gt;% summarize(mean(Black.or.African.American))</code></pre>
+<pre><code>##   mean(Black.or.African.American)
+## 1                        841567.1</code></pre>
+<pre class="r"><code>fulldat %&gt;% filter(TrumpWin==0) %&gt;% summarize(mean(Black.or.African.American))</code></pre>
+<pre><code>##   mean(Black.or.African.American)
+## 1                        734662.2</code></pre>
+<p>I began by mutating the dataset ‘fulldat’ to add a column that broke down the race into ‘PercentWhite’ to make it easier to see states with a majority white population, of white every single state had one to varying degrees. I mainly did this also to find correlations between the percent of white citizens in each state and the voting patterns of the state. I then began to examine the voting pattern differences in each state based on various factors. For example, I compared the average income per capita in states with Democratic leans and states with Republican leans and found the average difference was only about 8307.29, which I did not think would be enough to cause a major difference in voting patterns, but the higher per capita income was for Democratic states. I then broke down the PercentWhite by Trump Winning (1) or Trump Losing (0), and the five number summary showed that there wasn’t a major difference in the summary statistics (aside from the outlier of Hawaii). Since I did not see much difference between PercentWhite, I examined the mean HS education by state for each party, and they were almost exactly the same. I moved onto quartiles to divide the percent of individuals with college degrees in each state. It was interesting to find that the Democratic lean increased from the bottom to the top quartile, indicating that states with more college graduates voted Democrat. There were also, on average, many more African American individuals in States that were Democratic leaning. I also compared the difference in African American populations between states where Trump won and states where he didn’t. There was ~10000 person difference between the two, which is not a major difference and could likely only be due to differing sized states and less with voting patterns.</p>
+<pre class="r"><code>isnum &lt;-fulldat%&gt;%select_if(is.numeric)
+head(isnum)</code></pre>
+<pre><code>##   Income   HS   BA  Adv Dem.Rep TrumpWin    Total    White
+## 1  43623 84.3 23.5  8.7     -17        1  4779736  3362877
+## 2  72515 92.1 28.0 10.1     -17        1   710231   483873
+## 3  50255 86.0 27.5 10.2      -1        1  6392017  5418483
+## 4  41371 84.8 21.1  7.5      -7        1  2915918  2342403
+## 5  61818 81.8 31.4 11.6      16        0 37253956 27636403
+## 6  60629 90.7 38.1 14.0      -1        0  5029196  4450623
+##   Black.or.African.American American.Indian.and.Alaska.Native   Asian
+## 1                   1259224                             32903   55240
+## 2                     24441                            106268   38882
+## 3                    280905                            335278  188456
+## 4                    454021                             26134   37537
+## 5                   2486549                            622107 5038123
+## 6                    214919                             78144  144819
+##   Native.Hawaiian.and.Other.Pacific.Islander Two.or.More.Races PercentWhite
+## 1                                       5208             64284     70.35696
+## 2                                       7662             49105     68.12896
+## 3                                      16112            152783     84.76953
+## 4                                       6685             49138     80.33158
+## 5                                     181431           1289343     74.18381
+## 6                                       8420            132271     88.49572</code></pre>
+<pre class="r"><code>#numericdata &lt;- isnum%&gt;%select(-c(&quot;TrumpWin&quot;))
+#head(numericdata)
+glimpse(cor(isnum))</code></pre>
+<pre><code>##  num [1:14, 1:14] 1 0.482 0.809 0.725 0.345 ...
+##  - attr(*, &quot;dimnames&quot;)=List of 2
+##   ..$ : chr [1:14] &quot;Income&quot; &quot;HS&quot; &quot;BA&quot; &quot;Adv&quot; ...
+##   ..$ : chr [1:14] &quot;Income&quot; &quot;HS&quot; &quot;BA&quot; &quot;Adv&quot; ...</code></pre>
+<pre class="r"><code>tidycor&lt;-cor(isnum)%&gt;%as.data.frame%&gt;%
+rownames_to_column%&gt;%
+pivot_longer(-1,names_to=&quot;name&quot;,values_to=&quot;correlation&quot;)
+head(tidycor)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   rowname name     correlation
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 Income  Income         1    
+## 2 Income  HS             0.482
+## 3 Income  BA             0.809
+## 4 Income  Adv            0.725
+## 5 Income  Dem.Rep        0.345
+## 6 Income  TrumpWin      -0.610</code></pre>
+<pre class="r"><code>tidycor%&gt;%ggplot(aes(rowname,name,fill=correlation))+
+geom_tile()+
+scale_fill_gradient2(low=&quot;red&quot;,mid=&quot;white&quot;,high=&quot;blue&quot;)+
+geom_text(aes(label=round(correlation,2)),color = &quot;black&quot;, size = 2)+
+theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+coord_fixed()+ggtitle(&quot;Correlation Heat Map of 2016 Presidential Election Data&quot;)+xlab(&quot;&quot;)+ylab(&quot;&quot;)</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-10-1.png" width="864" /> While many of the correlations were insignificant since there were so many race variables, a few stuck out as interesting. There was a strong positive correlation between the Advanced degrees variable and Dem.Rep, meaning those states with higher percentages of advanced degree-holders were democratic. There was also a strong negative correlation with TrumpWin and advanced degree holders, and the same correlation was found between TrumpWin and bachelors degree holders. Interestingly, there was a negative correlation between TrumpWin and Income variables. Mainly, the most significant correlations were between education levels and party leans.</p>
+<pre class="r"><code>fulldat&lt;-fulldat%&gt;%mutate(Party=factor(Party,levels=c(&quot;Rep&quot;,&quot;Dem&quot;),labels=c(&quot;Rep&quot;,&quot;Dem&quot;)))
+ggplot(fulldat, aes(x = TrumpWin, y = Adv, fill=Party))+
+geom_bar(position=&quot;dodge&quot;, stat=&quot;summary&quot;,fun.y=&quot;mean&quot;)+scale_fill_brewer(palette = &quot;Set1&quot;)+scale_x_continuous(breaks=seq(0, 1))+scale_y_continuous(breaks=seq(0, 20, 2))+
+geom_errorbar(position = position_dodge(1), stat=&quot;summary&quot;, fun.data=&quot;mean_se&quot;, width=.1)+ggtitle(&quot;Election Results by Percent of Advanced Degree Holders and Party&quot;) + ylab(&quot;Percent of Advanced Degree Holders&quot;) + xlab(&quot;Trump Won (1) or Lost (0)&quot;)</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-11-1.png" width="672" /> The above bar plot counts the percentage of advanced degree holders in states where Trump won or lost, grouped by party lean. Based on the bar chart above, there were more advanced degree holders in states that did not vote for Trump compared to states that did vote for Trump. Not only this, but it shows that more advanced degree holders come from states that have a democratic lean as well.</p>
+<pre class="r"><code>fulldat&lt;-fulldat%&gt;%mutate(Party=factor(Party,levels=c(&quot;Rep&quot;,&quot;Dem&quot;),labels=c(&quot;Rep&quot;,&quot;Dem&quot;)))
+ggplot(fulldat, aes(Income, BA, color=Party))+geom_point(size = 2)+scale_color_brewer(palette = &quot;Set1&quot;)+ggtitle(&quot;State Party Lean by Bachelors Degree Holders and Per Capita Income&quot;) + ylab(&quot;Percentage of Bachelors Degree Holders (%)&quot;) + xlab(&quot;Income Per Capita ($)&quot;)</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-12-1.png" width="672" /> This scatter plot shows the spread of the average income per capita by the percentage of bachelors degree holders grouped by party. From the plot, it is easy to see that the democratic leaning states tend to have a higher average income per capita, as well as a higher percentage of bachelors degree holders. This is consistent with most of the earlier findings in this project that education seems to be the biggest factor in voting patterns.</p>
+<pre class="r"><code>library(cluster)
+
+pam_dat &lt;-fulldat %&gt;% select(-State)
+sil_width&lt;-vector()
+for(i in 2:10){
+  pam_fit &lt;- pam(pam_dat, k = i)
+  sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name=&quot;k&quot;,breaks=1:10)</code></pre>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_path).</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>sil_width[2]</code></pre>
+<pre><code>## [1] 0.6382001</code></pre>
+<pre class="r"><code>#result is 2 clusters
+pam1&lt;-pam_dat %&gt;% select(-1) %&gt;% pam(2)
+pam1 </code></pre>
+<pre><code>## Medoids:
+##      ID   HS   BA  Adv Dem.Rep TrumpWin    Total    White
+## [1,] 16 90.2 31.0 11.0     -13        1  2853118  2501057
+## [2,] 13 87.9 32.3 12.4      11        0 12830632 10030587
+##      Black.or.African.American American.Indian.and.Alaska.Native  Asian
+## [1,]                    173298                             33044  69628
+## [2,]                   1903458                             73846 604399
+##      Native.Hawaiian.and.Other.Pacific.Islander Two.or.More.Races PercentWhite
+## [1,]                                       2864             73227     87.66048
+## [2,]                                       7436            210906     78.17687
+##      Party
+## [1,]     1
+## [2,]     2
+## Clustering vector:
+##  [1] 1 1 1 1 2 1 1 1 2 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 1 1 1 1 1 2 1 2 2 1 2 1 1 2
+## [39] 1 1 1 1 2 1 1 1 1 1 1 1
+## Objective function:
+##   build    swap 
+## 3617939 3583855 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>pamclust&lt;-fulldat %&gt;% mutate(cluster=as.factor(pam1$clustering))
+
+pamclust %&gt;% ggplot(aes(Dem.Rep,BA,color=cluster))+geom_point()</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-13-2.png" width="672" /></p>
+<pre class="r"><code>pam2&lt;-fulldat%&gt;%select(c(Dem.Rep,HS,BA,Adv))%&gt;%pam(2)
+pam2</code></pre>
+<pre><code>## Medoids:
+##      ID Dem.Rep   HS   BA  Adv
+## [1,] 25      -8 88.4 27.1 10.2
+## [2,] 13      11 87.9 32.3 12.4
+## Clustering vector:
+##  [1] 1 1 1 1 2 2 2 2 1 1 2 1 2 1 1 1 1 1 1 2 2 2 2 1 1 1 1 1 1 2 2 2 1 1 1 1 2 2
+## [39] 2 1 1 1 1 1 2 1 2 1 1 1
+## Objective function:
+##    build     swap 
+## 9.742331 8.650056 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>final&lt;-fulldat%&gt;%mutate(cluster=as.factor(pam2$clustering))
+
+ggplot(final, aes(x=HS,y=Dem.Rep, color=cluster))+geom_point()</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-13-3.png" width="672" /></p>
+<pre class="r"><code>library(GGally)</code></pre>
+<pre><code>## Registered S3 method overwritten by &#39;GGally&#39;:
+##   method from   
+##   +.gg   ggplot2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;GGally&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     nasa</code></pre>
+<pre class="r"><code>fulldat%&gt;%select(c(Dem.Rep,HS,BA,Adv))%&gt;%mutate(cluster=as.factor(pam2$clustering))%&gt;%
+  ggpairs(columns=1:4,aes(color=cluster))</code></pre>
+<p><img src="/prez_project_meb_files/figure-html/unnamed-chunk-13-4.png" width="672" /> The data was first processed to include only numeric variables, and this data was plugged into a ggplot to generate the average silhouette width, of which 2 clusters gave the largest. Thus, 2 clusters were chosen, and the graph was generated to cluster the four variables Dem.Rep, HS, BA, and Adv, visualized by Dem.Rep and BA. I generated two plots, and the second cluster plot that I generated gave a more distinct difference between clusters, as it showed a clear cutoff in grouping with higher education. However, to more clearly show the correlations, a plot to generate all pairwise correlations was generated. These much more clearly showed the strong positive correlations between both advanced degree holders and bachelors degree holders with larger democratic leans. BA (bachelors) had a slighly less strong correlation than did Adv (advanced degrees). High school education had a very small negative correlation, so it seems to be the education level that determines voting patterns the least, which was also indicated in one of the first summary statistics aforementioned in this project. Overall, the well-clustered plots generated in this pair plot indicates that these varying education levels seem to be the most strongly correlated with voting patterns in the 2016 election.</p>
+<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

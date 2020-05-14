@@ -1,6 +1,7 @@
 ---
 title: "Project 2: Gun Violence Incidents in the United States in 2014 - Madison Brenner"
 output: pdf_document
+date: '2020-05-05'
 ---
 
 ```{r setup, include=FALSE}

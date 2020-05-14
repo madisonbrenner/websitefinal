@@ -1,0 +1,39 @@
+---
+title: Python with R
+author: ''
+date: '2020-05-14'
+slug: python
+categories: []
+tags: []
+description: ''
+---
+
+![](/blog/2020-05-14-python_files/reticulate.png)
+
+The only system I have used throughout my undergraduate degree has been R Studio, so I have become pretty confident in my skills using it. However, Python is a whole different story. I had never before printed "hello world" before one of the last lectures of Compuational Biology. I quickly learned though that R Studio and Python can go hand in hand as follows.
+
+You can save variables using Python chunks:
+
+```{python}
+x= "hello world"
+```
+
+And access them using R Studion functions:
+```{R}
+library("reticulate")
+py$x
+```
+
+Python also has useful functions
+
+```{python}
+list=[26,27,89,78,54,90,100] 
+print(list)
+min(list)
+```
+
+However, with Python, it is important to remember that the first integer postition is the 0th position
+```{python}
+list[0]
+list[1]
+```

@@ -11,6 +11,6 @@ title: Projects
 
 Here are some projects I have recently completed:
 
-- [Election Data by State for the 2016 Presidential Elections](/prez_project_meb.Rmd/)
+- [Election Data by State for the 2016 Presidential Elections](/prez_project_meb/)
 
-- [Gun Violence Incidents in the United States in 2014](/project2madisonbrenner.Rmd/)
+- [Gun Violence Incidents in the United States in 2014](/project2madisonbrenner/)

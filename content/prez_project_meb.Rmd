@@ -1,6 +1,7 @@
 ---
 title: "Election Data by State for the 2016 Presidential Elections"
 output: pdf_document
+date: '2020-03-13'
 ---
 
 ```{r setup, include=FALSE}

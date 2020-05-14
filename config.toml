@@ -21,7 +21,7 @@ theme = "hugo-sustain"
 
 [params.social]
   Email         = "madisonebrenner@gmail.com"
-  LinkedIn      = "https://www.linkedin.com/in/madison-brenner/"
+  LinkedIn      = "/https://www.linkedin.com/in/madison-brenner/"
 
 ## Main Menu
 [[menu.main]]
